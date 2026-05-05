@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ATL — TICKER ANALYZER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Chakra+Petch:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:          #070a0f;
+  --bg2:         #0b0f18;
+  --bg3:         #0f1420;
+  --bg4:         #111826;
+  --border:      #1a2236;
+  --border2:     #243050;
+  --accent:      #00d4ff;
+  --accent-dim:  #0099bb;
+  --accent-glow: rgba(0,212,255,0.12);
+  --bull:        #00e676;
+  --bull-dim:    #00a855;
+  --bull-glow:   rgba(0,230,118,0.12);
+  --bear:        #ff3d57;
+  --bear-dim:    #cc2040;
+  --bear-glow:   rgba(255,61,87,0.12);
+  --orange:      #ff9800;
+  --orange-glow: rgba(255,152,0,0.12);
+  --gold:        #ffd54f;
+  --text:        #d0dff0;
+  --text2:       #6a85a8;
+  --text3:       #3a4f6a;
+  --fd:          'Orbitron', monospace;
+  --fm:          'Share Tech Mono', monospace;
+  --fb:          'Chakra Petch', sans-serif;
+  --r:           4px;
+  --rl:          8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--fb);
+  font-size: 13px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── BACKGROUND ── */
+.bg-grid {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.bg-glow {
+  position: fixed; top: -300px; left: 50%; transform: translateX(-50%);
+  width: 900px; height: 500px; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse, rgba(0,212,255,0.04) 0%, transparent 70%);
+}
+.grain {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.25;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── HEADER ── */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; height: 56px;
+  background: rgba(7,10,15,0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+}
+.logo { font-family: var(--fd); font-size: 1rem; font-weight: 900; letter-spacing: 5px; color: var(--accent); }
+.logo-dim { color: var(--text3); }
+.header-sub {
+  font-family: var(--fm); font-size: 0.6rem; color: var(--text3);
+  letter-spacing: 3px; border-left: 1px solid var(--border); padding-left: 18px; margin-left: 18px;
+}
+.hdr-right { display: flex; align-items: center; gap: 16px; }
+.hdr-time { font-family: var(--fm); font-size: 0.8rem; color: var(--accent); letter-spacing: 2px; }
+.status-pill {
+  display: flex; align-items: center; gap: 7px;
+  padding: 5px 12px; border-radius: 20px;
+  background: var(--bg2); border: 1px solid var(--border);
+}
+.s-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); }
+.s-dot.ready  { background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: blink 2s infinite; }
+.s-dot.loading { background: var(--orange); box-shadow: 0 0 8px var(--orange); animation: blink 0.4s infinite; }
+.s-dot.ok     { background: var(--bull); box-shadow: 0 0 8px var(--bull); animation: blink 3s infinite; }
+.s-dot.error  { background: var(--bear); }
+.s-txt { font-family: var(--fm); font-size: 0.6rem; color: var(--text2); letter-spacing: 1.5px; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideIn { from { opacity:0; transform:translateY(20px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+@keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(0,212,255,0.4)} 70%{box-shadow:0 0 0 10px rgba(0,212,255,0)} 100%{box-shadow:0 0 0 0 rgba(0,212,255,0)} }
+
+/* ── MAIN ── */
+.main {
+  position: relative; z-index: 1;
+  max-width: 960px; margin: 0 auto;
+  padding: 36px 24px 60px;
+}
+
+/* ── SEARCH SECTION ── */
+.search-section {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 28px; margin-bottom: 40px;
+}
+.search-title {
+  font-family: var(--fd); font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 5px; color: var(--text3); text-align: center;
+}
+.search-box {
+  display: flex; align-items: stretch; gap: 0;
+  width: 100%; max-width: 560px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--rl); overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow), 0 0 24px rgba(0,212,255,0.06);
+}
+.search-prefix {
+  font-family: var(--fm); font-size: 0.65rem; color: var(--accent-dim);
+  letter-spacing: 1.5px; padding: 0 16px; border-right: 1px solid var(--border);
+  display: flex; align-items: center; white-space: nowrap; background: var(--bg3);
+}
+.search-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-family: var(--fd); font-size: 1.1rem;
+  font-weight: 700; letter-spacing: 4px; padding: 16px 18px;
+  text-transform: uppercase;
+}
+.search-input::placeholder { color: var(--text3); font-size: 0.85rem; letter-spacing: 3px; font-weight: 400; }
+.search-btn {
+  background: var(--accent); border: none; color: var(--bg);
+  font-family: var(--fd); font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 2px; padding: 0 24px; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.search-btn:hover { background: #00eeff; }
+.search-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--accent); }
+
+/* ── TIMEFRAME SELECTOR ── */
+.tf-row {
+  display: flex; align-items: center; gap: 12px;
+}
+.tf-label { font-family: var(--fm); font-size: 0.58rem; color: var(--text3); letter-spacing: 2px; }
+.tf-group {
+  display: flex; gap: 0;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden;
+}
+.tf-btn {
+  font-family: var(--fd); font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 2px; padding: 7px 18px; border: none;
+  background: none; color: var(--text3); cursor: pointer;
+  transition: all 0.15s; border-right: 1px solid var(--border);
+}
+.tf-btn:last-child { border-right: none; }
+.tf-btn:hover { color: var(--text); background: var(--bg3); }
+.tf-btn.active { background: var(--accent); color: var(--bg); }
+
+/* ── SOURCE BADGE ── */
+.source-badge {
+  font-family: var(--fm); font-size: 0.55rem; letter-spacing: 1.5px;
+  padding: 3px 10px; border-radius: 2px; align-self: center;
+}
+.src-binance { background: rgba(255,152,0,0.1); color: var(--orange); border: 1px solid rgba(255,152,0,0.25); }
+.src-bybit   { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(0,212,255,0.25); }
+
+/* ── BIAS HERO CARD ── */
+.bias-hero {
+  border-radius: var(--rl); padding: 28px 32px;
+  margin-bottom: 24px; position: relative; overflow: hidden;
+  animation: slideIn 0.4s ease both;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  border: 1px solid transparent;
+}
+.bias-hero.long  { background: linear-gradient(135deg, rgba(0,50,25,0.9), rgba(0,30,15,0.95)); border-color: rgba(0,230,118,0.3); }
+.bias-hero.short { background: linear-gradient(135deg, rgba(50,0,10,0.9), rgba(30,0,5,0.95));  border-color: rgba(255,61,87,0.3);  }
+.bias-hero.hot   { background: linear-gradient(135deg, rgba(50,25,0,0.9), rgba(30,15,0,0.95)); border-color: rgba(255,152,0,0.3); }
+.bias-hero.mix   { background: linear-gradient(135deg, rgba(15,20,32,0.9), rgba(10,14,22,0.95)); border-color: var(--border2); }
+
+.bias-hero::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.bias-hero.long::before  { background: linear-gradient(90deg, transparent, var(--bull), transparent); }
+.bias-hero.short::before { background: linear-gradient(90deg, transparent, var(--bear), transparent); }
+.bias-hero.hot::before   { background: linear-gradient(90deg, transparent, var(--orange), transparent); }
+.bias-hero.mix::before   { background: linear-gradient(90deg, transparent, var(--text3), transparent); }
+
+.bias-hero::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: var(--rl);
+}
+.bias-hero.long::after  { background: radial-gradient(ellipse at 80% 50%, rgba(0,230,118,0.05), transparent 60%); }
+.bias-hero.short::after { background: radial-gradient(ellipse at 80% 50%, rgba(255,61,87,0.05), transparent 60%); }
+.bias-hero.hot::after   { background: radial-gradient(ellipse at 80% 50%, rgba(255,152,0,0.05), transparent 60%); }
+
+.bias-left { display: flex; flex-direction: column; gap: 10px; position: relative; z-index: 1; }
+.bias-ticker { font-family: var(--fd); font-size: 2rem; font-weight: 900; letter-spacing: 4px; color: var(--text); }
+.bias-ex-row { display: flex; align-items: center; gap: 8px; }
+.bias-price { font-family: var(--fm); font-size: 0.9rem; color: var(--text2); letter-spacing: 1px; }
+.bias-change { font-family: var(--fm); font-size: 0.8rem; }
+.bias-change.pos { color: var(--bull); }
+.bias-change.neg { color: var(--bear); }
+
+.bias-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; position: relative; z-index: 1; }
+.bias-label-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.bias-label {
+  font-family: var(--fd); font-size: 1.1rem; font-weight: 900;
+  letter-spacing: 4px; padding: 8px 20px; border-radius: var(--r);
+}
+.bias-label.long  { color: var(--bull);   background: var(--bull-glow);   border: 1px solid rgba(0,230,118,0.3);  }
+.bias-label.short { color: var(--bear);   background: var(--bear-glow);   border: 1px solid rgba(255,61,87,0.3);  }
+.bias-label.hot   { color: var(--orange); background: var(--orange-glow); border: 1px solid rgba(255,152,0,0.3); }
+.bias-label.mix   { color: var(--text2);  background: var(--bg3);         border: 1px solid var(--border2); }
+
+.bias-score-row { display: flex; align-items: center; gap: 10px; }
+.bias-score-label { font-family: var(--fm); font-size: 0.55rem; color: var(--text3); letter-spacing: 2px; }
+.bias-score-val {
+  font-family: var(--fd); font-size: 1.5rem; font-weight: 900; letter-spacing: 2px;
+}
+.bias-score-val.long  { color: var(--bull); text-shadow: 0 0 20px rgba(0,230,118,0.4); }
+.bias-score-val.short { color: var(--bear); text-shadow: 0 0 20px rgba(255,61,87,0.4); }
+.bias-score-val.hot   { color: var(--orange); }
+.bias-score-val.mix   { color: var(--text2); }
+
+.bias-bar-wrap { width: 180px; }
+.bias-bar-track { height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+.bias-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+.bias-bar-fill.long  { background: linear-gradient(90deg, var(--bull-dim), var(--bull)); box-shadow: 0 0 8px rgba(0,230,118,0.4); }
+.bias-bar-fill.short { background: linear-gradient(90deg, var(--bear-dim), var(--bear)); box-shadow: 0 0 8px rgba(255,61,87,0.4); }
+.bias-bar-fill.hot   { background: linear-gradient(90deg, #cc7000, var(--orange)); }
+.bias-bar-fill.mix   { background: var(--text3); }
+
+/* ── THESIS ── */
+.thesis-box {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--rl); padding: 16px 20px;
+  margin-bottom: 24px; animation: slideIn 0.4s 0.05s ease both;
+}
+.thesis-label { font-family: var(--fm); font-size: 0.52rem; color: var(--text3); letter-spacing: 2px; margin-bottom: 8px; }
+.thesis-text { font-family: var(--fm); font-size: 0.72rem; color: var(--text2); line-height: 1.7; letter-spacing: 0.3px; }
+.thesis-text strong { color: var(--text); }
+
+/* ── SIGNAL CARDS GRID ── */
+.signals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+@media(max-width:640px) { .signals-grid { grid-template-columns: 1fr; } }
+
+/* ── SIGNAL CARD ── */
+.sig-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--rl); overflow: hidden;
+  animation: slideIn 0.4s ease both;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+.sig-card:hover {
+  border-color: var(--border2);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+.sig-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+}
+.sig-card.pos-card::before { background: var(--bull); }
+.sig-card.neg-card::before { background: var(--bear); }
+.sig-card.neu-card::before { background: var(--text3); }
+.sig-card.warn-card::before { background: var(--orange); }
+
+/* Drawer header */
+.sig-drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; cursor: pointer;
+  border-bottom: 1px solid transparent; transition: border-color 0.2s;
+  user-select: none;
+}
+.sig-card.open .sig-drawer-header { border-bottom-color: var(--border); }
+.sig-drawer-left { display: flex; align-items: center; gap: 12px; }
+.sig-num {
+  font-family: var(--fd); font-size: 0.52rem; font-weight: 700;
+  color: var(--text3); letter-spacing: 1px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--bg3); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.sig-name { font-family: var(--fd); font-size: 0.62rem; font-weight: 700; letter-spacing: 2px; color: var(--text); }
+.sig-max  { font-family: var(--fm); font-size: 0.52rem; color: var(--text3); letter-spacing: 1px; }
+.sig-drawer-right { display: flex; align-items: center; gap: 10px; }
+.sig-pts {
+  font-family: var(--fd); font-size: 0.85rem; font-weight: 700; letter-spacing: 1px;
+  min-width: 40px; text-align: right;
+}
+.sig-pts.pos { color: var(--bull); }
+.sig-pts.neg { color: var(--bear); }
+.sig-pts.neu { color: var(--text2); }
+.sig-pts.warn { color: var(--orange); }
+.sig-mini-bar { width: 60px; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+.sig-mini-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+.sig-mini-fill.pos  { background: var(--bull); }
+.sig-mini-fill.neg  { background: var(--bear); }
+.sig-mini-fill.warn { background: var(--orange); }
+.sig-mini-fill.neu  { background: var(--text3); }
+.drawer-arrow {
+  font-size: 0.6rem; color: var(--text3);
+  transition: transform 0.25s ease;
+}
+.sig-card.open .drawer-arrow { transform: rotate(180deg); }
+
+/* Drawer body */
+.sig-drawer-body {
+  max-height: 0; overflow: hidden;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+  padding: 0 16px;
+}
+.sig-card.open .sig-drawer-body { max-height: 300px; padding: 14px 16px; }
+
+.sig-raw-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.sig-raw-label { font-family: var(--fm); font-size: 0.55rem; color: var(--text3); letter-spacing: 1.5px; }
+.sig-raw-val { font-family: var(--fd); font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; }
+.sig-raw-val.pos  { color: var(--bull); }
+.sig-raw-val.neg  { color: var(--bear); }
+.sig-raw-val.warn { color: var(--orange); }
+.sig-raw-val.neu  { color: var(--text2); }
+.sig-raw-val.gold { color: var(--gold); }
+
+.sig-bar-track { height: 5px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 12px; }
+.sig-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+.sig-bar-fill.pos  { background: linear-gradient(90deg, var(--bull-dim), var(--bull)); box-shadow: 0 0 6px rgba(0,230,118,0.4); }
+.sig-bar-fill.neg  { background: linear-gradient(90deg, var(--bear-dim), var(--bear)); box-shadow: 0 0 6px rgba(255,61,87,0.4); }
+.sig-bar-fill.warn { background: linear-gradient(90deg, #cc7000, var(--orange)); }
+.sig-bar-fill.neu  { background: var(--text3); }
+
+.sig-desc { font-family: var(--fm); font-size: 0.62rem; color: var(--text3); line-height: 1.6; letter-spacing: 0.3px; }
+.sig-desc strong { color: var(--text2); }
+
+/* ── LOADING STATE ── */
+.loading-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  padding: 60px 20px; animation: fadeUp 0.3s ease;
+}
+.load-ring {
+  width: 40px; height: 40px;
+  border: 2px solid var(--border2); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+.load-phase { font-family: var(--fd); font-size: 0.6rem; color: var(--accent); letter-spacing: 3px; text-align: center; }
+.load-sub   { font-family: var(--fm); font-size: 0.58rem; color: var(--text3); letter-spacing: 1px; text-align: center; }
+.load-prog-track { width: 240px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+.load-prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent-dim), var(--accent)); border-radius: 1px; transition: width 0.4s ease; }
+
+/* ── ERROR ── */
+.error-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 60px 20px; animation: fadeUp 0.3s ease;
+}
+.error-icon { font-size: 2rem; color: var(--bear); opacity: 0.6; }
+.error-title { font-family: var(--fd); font-size: 0.7rem; letter-spacing: 3px; color: var(--bear); }
+.error-sub   { font-family: var(--fm); font-size: 0.6rem; color: var(--text3); letter-spacing: 1px; text-align: center; max-width: 360px; }
+
+/* ── IDLE ── */
+.idle-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 80px 20px;
+}
+.idle-icon  { font-size: 2.5rem; opacity: 0.06; }
+.idle-title { font-family: var(--fd); font-size: 0.7rem; letter-spacing: 4px; color: var(--text3); }
+.idle-sub   { font-family: var(--fm); font-size: 0.58rem; color: var(--text3); opacity: 0.5; letter-spacing: 1px; }
+
+/* ── SHIMMER SKELETON ── */
+.shimmer {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background-size: 400px 100%; animation: shimmer 1.4s infinite;
+  border-radius: 3px;
+}
+
+/* ── FOOTER ── */
+footer {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 28px; margin-top: 20px;
+  border-top: 1px solid var(--border);
+  font-family: var(--fm); font-size: 0.55rem; color: var(--text3); letter-spacing: 1px;
+}
+
+/* ── MOBILE ── */
+@media(max-width:600px) {
+  .header { padding: 0 16px; }
+  .header-sub { display: none; }
+  .main { padding: 24px 14px 48px; }
+  .bias-hero { flex-direction: column; align-items: flex-start; gap: 20px; padding: 20px; }
+  .bias-right { align-items: flex-start; }
+  .bias-bar-wrap { width: 100%; }
+  footer { flex-direction: column; gap: 6px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="grain"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <div style="display:flex;align-items:center;">
+    <div class="logo"><span class="logo-dim">[</span>ATL<span class="logo-dim">]</span></div>
+    <div class="header-sub">TICKER ANALYZER</div>
+  </div>
+  <div class="hdr-right">
+    <div class="status-pill">
+      <span class="s-dot ready" id="s-dot"></span>
+      <span class="s-txt" id="s-txt">READY</span>
+    </div>
+    <div class="hdr-time" id="hdr-time">--:--:--</div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- SEARCH SECTION -->
+  <div class="search-section">
+    <div class="search-title">ENTER TICKER SYMBOL</div>
+
+    <div class="search-box" id="search-box">
+      <span class="search-prefix">TICKER //</span>
+      <input type="text" class="search-input" id="ticker-input"
+        placeholder="BTC  ETH  SOL..."
+        maxlength="12"
+        autocomplete="off"
+        spellcheck="false"/>
+      <button class="search-btn" id="analyze-btn" onclick="runAnalysis()">ANALYZE</button>
+    </div>
+
+    <div class="tf-row">
+      <span class="tf-label">TIMEFRAME:</span>
+      <div class="tf-group">
+        <button class="tf-btn" id="tf-1h" onclick="setTF('1h')">1H</button>
+        <button class="tf-btn active" id="tf-4h" onclick="setTF('4h')">4H</button>
+        <button class="tf-btn" id="tf-1d" onclick="setTF('1d')">1D</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div id="output">
+    <div class="idle-wrap">
+      <div class="idle-icon">◎</div>
+      <div class="idle-title">AWAITING TICKER INPUT</div>
+      <div class="idle-sub">Enter a symbol above and press ANALYZE</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>ATL — ALPHA TRADERS LABS</span>
+  <span>BINANCE PRIMARY · BYBIT FALLBACK · NOT FINANCIAL ADVICE</span>
+</footer>
+
+<script>
+'use strict';
+
+/* ════════════════════════
+   STATE
+════════════════════════ */
+let currentTF = '4h';
+let currentResult = null;
+
+/* ════════════════════════
+   UTILS
+════════════════════════ */
+function setStatus(type, txt) {
+  document.getElementById('s-dot').className = 's-dot ' + type;
+  document.getElementById('s-txt').textContent = txt;
+}
+function startClock() {
+  const el = document.getElementById('hdr-time');
+  const t = () => { el.textContent = new Date().toLocaleTimeString('en-US',{hour12:false}); };
+  t(); setInterval(t, 1000);
+}
+function fmtPrice(p) {
+  if (!p || isNaN(p)) return '—';
+  return p >= 1 ? '$' + p.toLocaleString('en-US',{maximumFractionDigits:2}) : '$' + p.toFixed(6);
+}
+function fmtVol(v) {
+  if (!v || isNaN(v)) return '—';
+  if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
+  if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return '$' + (v/1e3).toFixed(0) + 'K';
+  return '$' + v.toFixed(0);
+}
+function clamp(v,min,max) { return Math.max(min,Math.min(max,v)); }
+function setProg(pct) {
+  const el = document.getElementById('load-prog');
+  if (el) el.style.width = pct + '%';
+}
+function setPhase(txt) {
+  const el = document.getElementById('load-phase');
+  if (el) el.textContent = txt;
+}
+
+/* ════════════════════════
+   TIMEFRAME
+════════════════════════ */
+function setTF(tf) {
+  currentTF = tf;
+  ['1h','4h','1d'].forEach(t => {
+    document.getElementById('tf-' + t).classList.toggle('active', t === tf);
+  });
+}
+
+/* ════════════════════════
+   FETCH HELPERS
+════════════════════════ */
+async function safeFetch(url, direct = false) {
+  if (direct) {
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.json();
+    } catch(e) { return null; }
+  }
+  const PROXIES = [
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest=',
+    'https://thingproxy.freeboard.io/fetch/',
+  ];
+  for (const p of PROXIES) {
+    try {
+      const r = await fetch(p + encodeURIComponent(url), { cache: 'no-store' });
+      if (!r.ok) continue;
+      const txt = await r.text();
+      try {
+        const j = JSON.parse(txt);
+        return j.contents && typeof j.contents === 'string' ? JSON.parse(j.contents) : j;
+      } catch(e) { continue; }
+    } catch(e) { continue; }
+  }
+  return null;
+}
+
+/* TF → period string mappings */
+function bybitPeriod(tf) { return tf === '1h' ? '1h' : tf === '4h' ? '4h' : '1d'; }
+function binancePeriod(tf) { return tf === '1h' ? '1h' : tf === '4h' ? '4h' : '1d'; }
+
+/* ════════════════════════
+   DATA FETCHERS — BINANCE
+════════════════════════ */
+
+async function fetchBinanceTicker(sym) {
+  const symbol = sym.toUpperCase() + 'USDT';
+  const data = await safeFetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${symbol}`);
+  if (!data || data.code) return null;
+  const ticker = await safeFetch(`https://fapi.binance.com/fapi/v1/ticker/24hr?symbol=${symbol}`);
+  return {
+    exchange:    'Binance',
+    symbol:      sym.toUpperCase(),
+    fullSym:     symbol,
+    funding:     parseFloat(data.lastFundingRate) * 100,
+    markPrice:   parseFloat(data.markPrice) || 0,
+    indexPrice:  parseFloat(data.indexPrice) || 0,
+    price:       parseFloat(data.markPrice) || 0,
+    price24hPct: ticker ? parseFloat(ticker.priceChangePercent) : 0,
+    vol24h:      ticker ? parseFloat(ticker.quoteVolume) : 0,
+    nextFunding: parseInt(data.nextFundingTime) || 0,
+  };
+}
+
+async function fetchBinanceLS(sym, tf) {
+  const symbol = sym.toUpperCase() + 'USDT';
+  const period = binancePeriod(tf);
+  const data = await safeFetch(`https://fapi.binance.com/futures/data/topLongShortAccountRatio?symbol=${symbol}&period=${period}&limit=1`);
+  const item = Array.isArray(data) ? data[0] : null;
+  if (!item) return null;
+  return {
+    buyRatio:  parseFloat(item.longAccount) || 0.5,
+    sellRatio: parseFloat(item.shortAccount) || 0.5,
+  };
+}
+
+async function fetchBinanceTaker(sym, tf) {
+  const symbol = sym.toUpperCase() + 'USDT';
+  const period = binancePeriod(tf);
+  const data = await safeFetch(`https://fapi.binance.com/futures/data/takerlongshortRatio?symbol=${symbol}&period=${period}&limit=1`);
+  const item = Array.isArray(data) ? data[0] : null;
+  if (!item) return null;
+  return {
+    buySellRatio: parseFloat(item.buySellRatio) || 1,
+    buyVol:       parseFloat(item.buyVol) || 0,
+    sellVol:      parseFloat(item.sellVol) || 0,
+  };
+}
+
+async function fetchBinanceOI(sym) {
+  const symbol = sym.toUpperCase() + 'USDT';
+  const data = await safeFetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${symbol}`);
+  if (!data || data.code) return null;
+  const oiVal = parseFloat(data.openInterest) * (parseFloat(data.openInterest) > 0 ? 1 : 0);
+  return { oi: oiVal, oiUSD: 0 };
+}
+
+/* ════════════════════════
+   DATA FETCHERS — BYBIT
+════════════════════════ */
+
+async function fetchBybitTicker(sym) {
+  const symbol = sym.toUpperCase() + 'USDT';
+  const data = await safeFetch(`https://api.bybit.com/v5/market/tickers?category=linear&symbol=${symbol}`, true);
+  const item = data?.result?.list?.[0];
+  if (!item) return null;
+  return {
+    exchange:    'Bybit',
+    symbol:      sym.toUpperCase(),
+    fullSym:     symbol,
+    funding:     parseFloat(item.fundingRate) * 100,
+    markPrice:   parseFloat(item.markPrice) || 0,
+    indexPrice:  parseFloat(item.indexPrice) || 0,
+    price:       parseFloat(item.lastPrice) || 0,
+    price24hPct: parseFloat(item.price24hPcnt) * 100,
+    vol24h:      parseFloat(item.turnover24h) || 0,
+    oi:          parseFloat(item.openInterestValue) || 0,
+    nextFunding: parseInt(item.nextFundingTime) || 0,
+  };
+}
+
+async function fetchBybitLS(sym, tf) {
+  const symbol = sym.toUpperCase() + 'USDT';
+  const period = bybitPeriod(tf);
+  const data = await safeFetch(`https://api.bybit.com/v5/market/account-ratio?category=linear&symbol=${symbol}&period=${period}&limit=1`, true);
+  const item = data?.result?.list?.[0];
+  if (!item) return null;
+  return {
+    buyRatio:  parseFloat(item.buyRatio) || 0.5,
+    sellRatio: parseFloat(item.sellRatio) || 0.5,
+  };
+}
+
+/* ════════════════════════
+   MAIN FETCH ORCHESTRATOR
+════════════════════════ */
+async function fetchAllData(sym, tf) {
+  let base = null;
+  let source = 'Binance';
+
+  setPhase('PHASE 1/3 — FETCHING BINANCE TICKER...'); setProg(10);
+  base = await fetchBinanceTicker(sym);
+
+  if (!base) {
+    setPhase('BINANCE UNAVAILABLE — TRYING BYBIT...'); setProg(20);
+    base = await fetchBybitTicker(sym);
+    source = 'Bybit';
+  }
+  if (!base) throw new Error('Symbol not found on Binance or Bybit. Check the ticker and try again.');
+
+  setPhase('PHASE 2/3 — FETCHING L/S RATIO + OI...'); setProg(40);
+
+  let ls = null, oi = null, taker = null;
+
+  if (source === 'Binance') {
+    [ls, oi, taker] = await Promise.all([
+      fetchBinanceLS(sym, tf),
+      fetchBinanceOI(sym),
+      fetchBinanceTaker(sym, tf),
+    ]);
+    if (oi && base.price > 0) {
+      base.oi = oi.oi * base.price;
+    }
+    base.takerFlow = taker;
+  } else {
+    ls = await fetchBybitLS(sym, tf);
+    // OI already in base from Bybit ticker
+  }
+
+  base.lsRatio = ls;
+  base.source   = source;
+  base.tf       = tf;
+
+  setPhase('PHASE 3/3 — SCORING...'); setProg(85);
+  await new Promise(r => setTimeout(r, 300));
+
+  return base;
+}
+
+/* ════════════════════════
+   SCORING ENGINE
+════════════════════════ */
+function scoreAsset(a) {
+  let score = 0;
+  const sigs = [];
+  const absF  = Math.abs(a.funding);
+  const isPos = a.funding > 0;
+
+  /* — Signal 1: Funding ±30 — */
+  let fS = 0;
+  if      (absF > 0.2)  fS = isPos ? -30 :  30;
+  else if (absF > 0.1)  fS = isPos ? -24 :  24;
+  else if (absF > 0.05) fS = isPos ? -18 :  18;
+  else if (absF > 0.03) fS = isPos ? -10 :  10;
+  score += fS;
+  const fSign = a.funding >= 0 ? '+' : '';
+  sigs.push({
+    num: 1, label: 'FUNDING RATE', maxPts: 30, pts: fS,
+    rawLabel: 'CURRENT RATE', rawVal: fSign + a.funding.toFixed(4) + '%',
+    rawCls: fS > 0 ? 'pos' : fS < 0 ? 'neg' : 'neu',
+    desc: isPos
+      ? `Positive funding of <strong>${fSign}${a.funding.toFixed(4)}%</strong> means longs are paying shorts. Bulls are overextended. Higher magnitude = stronger SHORT signal.`
+      : `Negative funding of <strong>${fSign}${a.funding.toFixed(4)}%</strong> means shorts are paying longs. Bears are overextended. Stronger magnitude = stronger LONG signal.`,
+    extraRows: [
+      { label: 'NEXT FUNDING', val: fmtNextFunding(a.nextFunding), cls: 'neu' },
+      { label: 'EXCHANGE', val: a.source.toUpperCase(), cls: 'neu' },
+    ],
+  });
+
+  /* — Signal 2: L/S Ratio ±25 — */
+  let lsS = 0, lsRaw = '—', lsDesc = 'L/S ratio data unavailable for this symbol.';
+  if (a.lsRatio) {
+    const buy = a.lsRatio.buyRatio, sell = a.lsRatio.sellRatio;
+    lsRaw = (buy * 100).toFixed(1) + '% L / ' + (sell * 100).toFixed(1) + '% S';
+    const dominance = buy - sell;
+    if      (dominance >  0.15) lsS = isPos ? -10 :  25;
+    else if (dominance >  0.08) lsS = isPos ?  -6 :  15;
+    else if (dominance >  0.02) lsS = isPos ?  -3 :   8;
+    else if (dominance < -0.15) lsS = isPos ?  25 : -10;
+    else if (dominance < -0.08) lsS = isPos ?  15 :  -6;
+    else if (dominance < -0.02) lsS = isPos ?   8 :  -3;
+    const side = dominance > 0 ? 'longs' : 'shorts';
+    lsDesc = `<strong>${(buy*100).toFixed(1)}% longs vs ${(sell*100).toFixed(1)}% shorts</strong> at the ${currentTF} timeframe. ${side === 'longs' ? 'Long-side crowding ' + (isPos ? 'confirms SHORT bias.' : 'contradicts negative funding.') : 'Short-side crowding ' + (isPos ? 'contradicts positive funding.' : 'confirms LONG bias.')}`;
+  }
+  score += lsS;
+  sigs.push({
+    num: 2, label: 'L/S RATIO', maxPts: 25, pts: lsS,
+    rawLabel: 'POSITIONING', rawVal: lsRaw,
+    rawCls: lsS > 0 ? 'pos' : lsS < 0 ? 'neg' : 'neu',
+    desc: lsDesc,
+    extraRows: a.lsRatio ? [
+      { label: 'LONG %', val: (a.lsRatio.buyRatio * 100).toFixed(2) + '%', cls: 'pos' },
+      { label: 'SHORT %', val: (a.lsRatio.sellRatio * 100).toFixed(2) + '%', cls: 'neg' },
+    ] : [],
+  });
+
+  /* — Signal 3: OI Context ±20 — */
+  let oiS = 0, oiRaw = '—', oiDesc = 'OI data unavailable.';
+  const oiVal = a.oi || 0;
+  const vol = a.vol24h || 0;
+  if (oiVal > 0 && vol > 0) {
+    const voi = vol / oiVal;
+    oiRaw = 'V/OI ' + voi.toFixed(2) + 'x';
+    if (isPos) {
+      if      (voi > 4)   { oiS = -20; }
+      else if (voi > 2)   { oiS = -12; }
+      else if (voi > 0.5) { oiS =  -6; }
+      else                { oiS =  10; }
+    } else {
+      if      (voi > 4)   { oiS =  20; }
+      else if (voi > 2)   { oiS =  12; }
+      else if (voi > 0.5) { oiS =   6; }
+      else                { oiS = -10; }
+    }
+    const intensity = voi > 4 ? 'Very high' : voi > 2 ? 'Moderate-high' : voi > 0.5 ? 'Low' : 'Stagnant';
+    oiDesc = `Open Interest: <strong>${fmtVol(oiVal)}</strong> · Volume 24h: <strong>${fmtVol(vol)}</strong> · V/OI ratio: <strong>${voi.toFixed(2)}x</strong>. ${intensity} turnover relative to OI. ${isPos ? 'High V/OI with positive funding = crowded longs, SHORT conviction increases.' : 'High V/OI with negative funding = crowded shorts, LONG conviction increases.'}`;
+  } else if (oiVal === 0) {
+    oiRaw = 'N/A';
+    oiDesc = 'Open Interest not available for this exchange/symbol combination.';
+  }
+  score += oiS;
+  sigs.push({
+    num: 3, label: 'OI CONTEXT', maxPts: 20, pts: oiS,
+    rawLabel: 'V/OI RATIO', rawVal: oiRaw,
+    rawCls: oiS > 0 ? 'pos' : oiS < 0 ? 'neg' : 'neu',
+    desc: oiDesc,
+    extraRows: [
+      { label: 'OPEN INTEREST', val: fmtVol(oiVal), cls: 'gold' },
+      { label: 'VOLUME 24H', val: fmtVol(vol), cls: 'neu' },
+    ],
+  });
+
+  /* — Signal 4: Price 24h ±15 — */
+  let pS = 0;
+  const p24 = a.price24hPct || 0;
+  if (isPos) {
+    if      (p24 >  5) pS = -15;
+    else if (p24 >  2) pS = -10;
+    else if (p24 > 0.5) pS = -5;
+    else if (p24 < -5) pS =  15;
+    else if (p24 < -2) pS =  10;
+    else if (p24 < -0.5) pS =  5;
+  } else {
+    if      (p24 < -5) pS =  15;
+    else if (p24 < -2) pS =  10;
+    else if (p24 < -0.5) pS =  5;
+    else if (p24 >  5) pS = -15;
+    else if (p24 >  2) pS = -10;
+    else if (p24 > 0.5) pS = -5;
+  }
+  score += pS;
+  const p24Sign = p24 >= 0 ? '+' : '';
+  sigs.push({
+    num: 4, label: 'PRICE 24H', maxPts: 15, pts: pS,
+    rawLabel: 'PRICE CHANGE', rawVal: p24Sign + p24.toFixed(2) + '%',
+    rawCls: p24 > 0 ? 'pos' : p24 < 0 ? 'neg' : 'neu',
+    desc: `24h price change: <strong>${p24Sign}${p24.toFixed(2)}%</strong>. ${isPos ? (p24 > 0 ? 'Rising price + positive funding = overbought longs. Adds SHORT conviction.' : 'Falling price despite positive funding = longs weakening. Mixed but leans LONG reversal.') : (p24 < 0 ? 'Falling price + negative funding = oversold shorts. Adds LONG conviction.' : 'Rising price despite negative funding = shorts weakening. Mixed but leans SHORT reversal.')}`,
+    extraRows: [
+      { label: 'MARK PRICE', val: fmtPrice(a.markPrice || a.price), cls: 'neu' },
+      { label: 'INDEX PRICE', val: fmtPrice(a.indexPrice), cls: 'neu' },
+    ],
+  });
+
+  /* — Signal 5: Taker Flow (Binance) OR Basis (Bybit) ±10 — */
+  let s5 = 0, s5Raw = '—', s5Label = a.source === 'Binance' ? 'TAKER FLOW' : 'BASIS RATE';
+  let s5Desc = '';
+  if (a.source === 'Binance' && a.takerFlow) {
+    const bsr = a.takerFlow.buySellRatio;
+    s5Raw = 'B/S ' + bsr.toFixed(3);
+    if      (bsr > 1.3) { s5 = isPos ? -10 :  5; }
+    else if (bsr > 1.1) { s5 = isPos ?  -5 :  2; }
+    else if (bsr < 0.7) { s5 = isPos ?   5 : -10; }
+    else if (bsr < 0.9) { s5 = isPos ?   2 :  -5; }
+    const aggrLabel = bsr > 1.3 ? 'Aggressive buying' : bsr > 1.1 ? 'Buy-side lean' : bsr < 0.7 ? 'Aggressive selling' : bsr < 0.9 ? 'Sell-side lean' : 'Balanced flow';
+    s5Desc = `Taker buy/sell ratio: <strong>${bsr.toFixed(3)}</strong>. ${aggrLabel}. Buy vol: <strong>${fmtVol(a.takerFlow.buyVol)}</strong> · Sell vol: <strong>${fmtVol(a.takerFlow.sellVol)}</strong>. ${isPos ? (bsr > 1 ? 'Aggressive buying into positive funding = longs still piling in = SHORT confirmation.' : 'Selling pressure easing long crowding.') : (bsr < 1 ? 'Aggressive selling into negative funding = shorts piling in = LONG confirmation.' : 'Buying pressure easing short crowding.')}`;
+  } else if (a.source === 'Bybit' && (a.markPrice > 0) && (a.indexPrice > 0)) {
+    const basis = ((a.markPrice - a.indexPrice) / a.indexPrice) * 100;
+    s5Raw = (basis >= 0 ? '+' : '') + basis.toFixed(4) + '%';
+    if      (basis >  0.1)  s5 = -10;
+    else if (basis >  0.03) s5 =  -4;
+    else if (basis < -0.1)  s5 =  10;
+    else if (basis < -0.03) s5 =   4;
+    const basisLabel = basis > 0.1 ? 'Futures trading premium over spot' : basis < -0.1 ? 'Futures trading discount to spot' : 'Basis near flat';
+    s5Desc = `Mark: <strong>${fmtPrice(a.markPrice)}</strong> · Index: <strong>${fmtPrice(a.indexPrice)}</strong> · Basis: <strong>${s5Raw}</strong>. ${basisLabel}. ${basis > 0 ? 'Positive basis + positive funding = longs still bidding futures up = SHORT pressure.' : 'Negative basis + negative funding = shorts pressing futures down = LONG setup.'}`;
+  } else {
+    s5Raw = 'N/A'; s5Desc = 'Taker flow / basis data not available.';
+  }
+  score += s5;
+  sigs.push({
+    num: 5, label: s5Label, maxPts: 10, pts: s5,
+    rawLabel: s5Label === 'TAKER FLOW' ? 'B/S RATIO' : 'BASIS',
+    rawVal: s5Raw,
+    rawCls: s5 > 0 ? 'pos' : s5 < 0 ? 'neg' : 'neu',
+    desc: s5Desc,
+    extraRows: a.source === 'Binance' && a.takerFlow ? [
+      { label: 'BUY VOL', val: fmtVol(a.takerFlow.buyVol), cls: 'pos' },
+      { label: 'SELL VOL', val: fmtVol(a.takerFlow.sellVol), cls: 'neg' },
+    ] : [],
+  });
+
+  /* — Bias Classification — */
+  let bias, biasLabel;
+  const isExtremePos = a.funding > 0.08;
+  const isExtremeNeg = a.funding < -0.08;
+
+  if (isExtremePos && score > -30) {
+    bias = 'hot'; biasLabel = 'OVERHEATED';
+  } else if (isExtremeNeg && score > 0) {
+    bias = 'hot'; biasLabel = 'SQUEEZE RISK';
+  } else if (score >= 30) {
+    bias = 'long'; biasLabel = 'LONG BIAS';
+  } else if (score <= -20) {
+    bias = 'short'; biasLabel = 'SHORT BIAS';
+  } else {
+    bias = 'mix'; biasLabel = 'MIXED SIGNALS';
+  }
+
+  const barPct = clamp(Math.abs(score) / 80 * 100, 0, 100);
+  const thesis = buildThesis(a, bias, score, sigs);
+
+  return { ...a, score, sigs, bias, biasLabel, barPct, thesis };
+}
+
+function fmtNextFunding(ts) {
+  if (!ts) return '—';
+  const diff = ts - Date.now();
+  if (diff < 0) return 'NOW';
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  return h + 'h ' + m + 'm';
+}
+
+function buildThesis(a, bias, score, sigs) {
+  const fStr = (a.funding >= 0 ? '+' : '') + a.funding.toFixed(4) + '%';
+  const pStr = (a.price24hPct >= 0 ? '+' : '') + (a.price24hPct || 0).toFixed(2) + '%';
+  const lsStr = a.lsRatio
+    ? (a.lsRatio.buyRatio * 100).toFixed(1) + '% longs / ' + (a.lsRatio.sellRatio * 100).toFixed(1) + '% shorts'
+    : 'L/S ratio N/A';
+
+  if (bias === 'long') {
+    return `<strong>LONG BIAS</strong> · Score ${score >= 0 ? '+' : ''}${score}/100 · Funding ${fStr} signals shorts overextended and paying longs. ${lsStr}. Price ${pStr} 24h aligns with downside pressure confirming potential reversal up. Conditions favour long setups — manage risk accordingly.`;
+  }
+  if (bias === 'short') {
+    return `<strong>SHORT BIAS</strong> · Score ${score}/100 · Funding ${fStr}: longs paying shorts, bulls overextended. ${lsStr}. Price ${pStr} 24h. Crowd positioning and funding pressure point to downside — watch for long liquidation cascade.`;
+  }
+  if (bias === 'hot') {
+    if (a.funding > 0) return `<strong>OVERHEATED</strong> · Score ${score}/100 · Extreme positive funding at ${fStr}. Longs paying heavily — market severely over-leveraged to the upside. ${lsStr}. High liquidation cascade risk. Approach with extreme caution.`;
+    return `<strong>SQUEEZE RISK</strong> · Score ${score}/100 · Extreme negative funding at ${fStr}. Shorts paying heavily — severe downside over-leverage. ${lsStr}. Price ${pStr}. Violent short squeeze possible. Do not short into this.`;
+  }
+  return `<strong>MIXED SIGNALS</strong> · Score ${score >= 0 ? '+' : ''}${score}/100 · Funding ${fStr}, price ${pStr}. ${lsStr}. Signals are not aligned enough for a high-conviction directional bias. Wait for clearer setup — patience is a position.`;
+}
+
+/* ════════════════════════
+   RENDER
+════════════════════════ */
+function renderResult(result) {
+  const r = result;
+  const scoreSign = r.score >= 0 ? '+' : '';
+  const p24Sign = (r.price24hPct || 0) >= 0 ? '+' : '';
+
+  /* Bias hero */
+  const heroHTML = `
+    <div class="bias-hero ${r.bias}" style="animation-delay:0s">
+      <div class="bias-left">
+        <div class="bias-ticker">${r.symbol}<span style="font-size:0.65rem;color:var(--text3);margin-left:8px;letter-spacing:2px;">USDT</span></div>
+        <div class="bias-ex-row">
+          <span class="source-badge src-${r.source.toLowerCase()}">${r.source.toUpperCase()}</span>
+          <span style="font-family:var(--fm);font-size:0.6rem;color:var(--text3);letter-spacing:1px;">TIMEFRAME: ${r.tf.toUpperCase()}</span>
+        </div>
+        <div class="bias-ex-row" style="gap:12px;margin-top:4px;">
+          <span class="bias-price">${fmtPrice(r.price)}</span>
+          <span class="bias-change ${(r.price24hPct||0) >= 0 ? 'pos' : 'neg'}">${p24Sign}${(r.price24hPct||0).toFixed(2)}%</span>
+        </div>
+      </div>
+      <div class="bias-right">
+        <div class="bias-label-wrap">
+          <div class="bias-label ${r.bias}">${r.biasLabel}</div>
+          <div class="bias-score-row">
+            <span class="bias-score-label">SCORE</span>
+            <span class="bias-score-val ${r.bias}">${scoreSign}${r.score}<span style="font-size:0.6rem;opacity:0.5;">/100</span></span>
+          </div>
+        </div>
+        <div class="bias-bar-wrap">
+          <div class="bias-bar-track">
+            <div class="bias-bar-fill ${r.bias}" style="width:${r.barPct}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  /* Thesis */
+  const thesisHTML = `
+    <div class="thesis-box" style="animation-delay:0.08s">
+      <div class="thesis-label">ANALYSIS THESIS</div>
+      <div class="thesis-text">${r.thesis}</div>
+    </div>`;
+
+  /* Signal cards */
+  const cardsHTML = `
+    <div class="signals-grid">
+      ${r.sigs.map((s, i) => renderSigCard(s, i)).join('')}
+    </div>`;
+
+  document.getElementById('output').innerHTML = heroHTML + thesisHTML + cardsHTML;
+
+  /* Open first card by default */
+  setTimeout(() => {
+    const first = document.querySelector('.sig-card');
+    if (first) first.classList.add('open');
+  }, 100);
+}
+
+function renderSigCard(s, i) {
+  const barPct = clamp(Math.abs(s.pts) / s.maxPts * 100, 0, 100);
+  const cardCls = s.pts > 0 ? 'pos-card' : s.pts < 0 ? 'neg-card' : 'neu-card';
+  const ptsCls  = s.pts > 0 ? 'pos' : s.pts < 0 ? 'neg' : 'neu';
+  const sign    = s.pts > 0 ? '+' : '';
+
+  const extraRowsHTML = s.extraRows && s.extraRows.length
+    ? s.extraRows.map(row => `
+        <div class="sig-raw-row" style="margin-bottom:6px;">
+          <span class="sig-raw-label">${row.label}</span>
+          <span class="sig-raw-val ${row.cls}">${row.val}</span>
+        </div>`).join('')
+    : '';
+
+  return `
+    <div class="sig-card ${cardCls}" style="animation-delay:${0.12 + i * 0.06}s" onclick="toggleDrawer(this)">
+      <div class="sig-drawer-header">
+        <div class="sig-drawer-left">
+          <span class="sig-num">${s.num}</span>
+          <div>
+            <div class="sig-name">${s.label}</div>
+            <div class="sig-max">MAX ±${s.maxPts} PTS</div>
+          </div>
+        </div>
+        <div class="sig-drawer-right">
+          <div class="sig-mini-bar">
+            <div class="sig-mini-fill ${ptsCls}" style="width:${barPct}%"></div>
+          </div>
+          <span class="sig-pts ${ptsCls}">${sign}${s.pts}</span>
+          <span class="drawer-arrow">▼</span>
+        </div>
+      </div>
+      <div class="sig-drawer-body">
+        <div class="sig-raw-row">
+          <span class="sig-raw-label">${s.rawLabel}</span>
+          <span class="sig-raw-val ${s.rawCls}">${s.rawVal}</span>
+        </div>
+        ${extraRowsHTML}
+        <div class="sig-bar-track">
+          <div class="sig-bar-fill ${ptsCls}" style="width:${barPct}%"></div>
+        </div>
+        <div class="sig-desc">${s.desc}</div>
+      </div>
+    </div>`;
+}
+
+function toggleDrawer(card) {
+  card.classList.toggle('open');
+}
+
+/* ════════════════════════
+   RUN ANALYSIS
+════════════════════════ */
+async function runAnalysis() {
+  const raw = document.getElementById('ticker-input').value.trim().toUpperCase();
+  if (!raw) return;
+
+  const sym = raw.replace('USDT','').replace('/','');
+  if (!sym) return;
+
+  document.getElementById('analyze-btn').disabled = true;
+  setStatus('loading', 'ANALYZING ' + sym + '...');
+
+  document.getElementById('output').innerHTML = `
+    <div class="loading-wrap">
+      <div class="load-ring"></div>
+      <div class="load-phase" id="load-phase">INITIALISING...</div>
+      <div class="load-prog-track">
+        <div class="load-prog-fill" id="load-prog" style="width:0%"></div>
+      </div>
+      <div class="load-sub">Binance primary · Bybit fallback</div>
+    </div>`;
+
+  try {
+    const data = await fetchAllData(sym, currentTF);
+    setProg(100);
+    const result = scoreAsset(data);
+    currentResult = result;
+    renderResult(result);
+    setStatus('ok', sym + ' — ' + result.biasLabel);
+  } catch(e) {
+    document.getElementById('output').innerHTML = `
+      <div class="error-wrap">
+        <div class="error-icon">✕</div>
+        <div class="error-title">ANALYSIS FAILED</div>
+        <div class="error-sub">${e.message}</div>
+      </div>`;
+    setStatus('error', 'FETCH FAILED');
+  }
+
+  document.getElementById('analyze-btn').disabled = false;
+}
+
+/* ── Enter key support ── */
+document.getElementById('ticker-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runAnalysis();
+});
+
+/* ── Init ── */
+startClock();
+setStatus('ready', 'READY');
+</script>
+</body>
+</html>
