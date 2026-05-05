@@ -390,6 +390,204 @@ body {
   border-radius: 3px;
 }
 
+/* ══════════════════════════════
+   NEGATIVE FUNDING SECTION
+══════════════════════════════ */
+.nf-section {
+  margin-top: 48px; position: relative; z-index: 1;
+}
+.nf-section-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+}
+.nf-section-tag {
+  font-family: var(--fm); font-size: 0.52rem; letter-spacing: 2px;
+  color: var(--bear); padding: 3px 10px; border-radius: 2px;
+  background: var(--bear-glow); border: 1px solid rgba(255,61,87,0.25);
+}
+.nf-section-title {
+  font-family: var(--fd); font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 3px; color: var(--text);
+}
+.nf-section-sub {
+  font-family: var(--fm); font-size: 0.55rem; color: var(--text3);
+  letter-spacing: 1px; margin-left: auto;
+}
+
+/* Control bar */
+.nf-controls {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.nf-ex-group { display: flex; gap: 0; border-radius: var(--r); overflow: hidden; border: 1px solid var(--border2); }
+.nf-ex-btn {
+  font-family: var(--fd); font-size: 0.58rem; font-weight: 700; letter-spacing: 2px;
+  padding: 9px 20px; border: none; background: var(--bg2); color: var(--text3);
+  cursor: pointer; transition: all 0.15s; border-right: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.nf-ex-btn:last-child { border-right: none; }
+.nf-ex-btn:hover { color: var(--text); background: var(--bg3); }
+.nf-ex-btn.sel-bn { background: rgba(255,152,0,0.1); color: var(--orange); }
+.nf-ex-btn.sel-bb { background: var(--accent-glow); color: var(--accent); }
+.nf-ex-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.nf-ex-btn.sel-bn .nf-ex-dot { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+.nf-ex-btn.sel-bb .nf-ex-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.nf-ex-btn:not(.sel-bn):not(.sel-bb) .nf-ex-dot { background: var(--text3); }
+
+.nf-scan-btn {
+  font-family: var(--fd); font-size: 0.6rem; font-weight: 700; letter-spacing: 2.5px;
+  padding: 9px 24px; border-radius: var(--r); cursor: pointer; transition: all 0.2s;
+  border: 1px solid var(--bear); color: var(--bear); background: transparent;
+  display: flex; align-items: center; gap: 8px;
+  position: relative; overflow: hidden;
+}
+.nf-scan-btn::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--bear); transform: translateX(-100%); transition: transform 0.2s; z-index: 0;
+}
+.nf-scan-btn:hover { color: var(--bg); }
+.nf-scan-btn:hover::before { transform: translateX(0); }
+.nf-scan-btn > * { position: relative; z-index: 1; }
+.nf-scan-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.nf-scan-btn:disabled::before { display: none; }
+.nf-scan-spin { animation: spin 0.8s linear infinite; display: inline-block; }
+
+/* Sort toggle */
+.nf-sort-btn {
+  font-family: var(--fm); font-size: 0.58rem; letter-spacing: 1.5px;
+  padding: 9px 16px; border-radius: var(--r);
+  border: 1px solid var(--border2); background: var(--bg2); color: var(--text3);
+  cursor: pointer; transition: all 0.15s; margin-left: auto;
+  display: flex; align-items: center; gap: 7px;
+}
+.nf-sort-btn:hover { color: var(--bear); border-color: rgba(255,61,87,0.4); }
+.nf-sort-arrow { font-size: 0.7rem; transition: transform 0.2s; }
+.nf-sort-arrow.asc { transform: rotate(180deg); }
+
+/* Stats strip */
+.nf-stats-strip {
+  display: flex; align-items: center; gap: 0;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+  margin-bottom: 12px;
+}
+.nf-stat {
+  flex: 1; padding: 10px 16px; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.nf-stat:last-child { border-right: none; }
+.nf-stat-label { font-family: var(--fm); font-size: 0.5rem; color: var(--text3); letter-spacing: 2px; }
+.nf-stat-val { font-family: var(--fd); font-size: 0.85rem; font-weight: 700; }
+.nf-stat-val.bear-c { color: var(--bear); }
+.nf-stat-val.gold-c { color: var(--gold); }
+.nf-stat-val.acc-c  { color: var(--accent); }
+
+/* Table */
+.nf-table-wrap {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--rl); overflow: hidden;
+}
+.nf-table {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--fm); font-size: 0.72rem;
+}
+.nf-table thead tr {
+  background: var(--bg3); border-bottom: 1px solid var(--border2);
+}
+.nf-table th {
+  padding: 10px 16px; text-align: left;
+  font-size: 0.55rem; letter-spacing: 2px; color: var(--text3);
+  font-weight: 600; white-space: nowrap;
+}
+.nf-table th.th-rate {
+  cursor: pointer; user-select: none; color: var(--bear);
+  transition: opacity 0.15s;
+}
+.nf-table th.th-rate:hover { opacity: 0.7; }
+.nf-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s;
+  animation: fadeUp 0.2s ease both;
+}
+.nf-table tbody tr:last-child { border-bottom: none; }
+.nf-table tbody tr:hover { background: var(--bg3); }
+.nf-table td { padding: 10px 16px; white-space: nowrap; }
+
+/* Row cells */
+.nf-rank { font-family: var(--fd); font-size: 0.55rem; color: var(--text3); width: 36px; }
+.nf-sym-cell { display: flex; align-items: center; gap: 10px; }
+.nf-sym-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--bg4); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--fd); font-size: 6px; font-weight: 700; color: var(--text3); flex-shrink: 0;
+}
+.nf-sym { font-family: var(--fd); font-size: 0.72rem; font-weight: 700; color: var(--text); letter-spacing: 1.5px; }
+.nf-usdt { font-family: var(--fm); font-size: 0.52rem; color: var(--text3); margin-top: 1px; letter-spacing: 0.5px; }
+.nf-rate-val {
+  font-family: var(--fd); font-size: 0.78rem; font-weight: 700;
+  color: var(--bear); text-shadow: 0 0 10px rgba(255,61,87,0.3);
+  letter-spacing: 1px;
+}
+.nf-bar-cell { display: flex; align-items: center; gap: 8px; }
+.nf-bar-bg { width: 80px; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; }
+.nf-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--bear-dim), var(--bear)); box-shadow: 0 0 6px rgba(255,61,87,0.4); }
+.nf-price-val { font-family: var(--fm); font-size: 0.68rem; color: var(--text2); }
+.nf-ex-badge {
+  font-family: var(--fd); font-size: 0.5rem; font-weight: 700;
+  letter-spacing: 1px; padding: 2px 7px; border-radius: 2px;
+}
+.nf-ex-bn { background: rgba(255,152,0,0.1); color: var(--orange); border: 1px solid rgba(255,152,0,0.2); }
+.nf-ex-bb { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+.nf-analyze-btn {
+  font-family: var(--fd); font-size: 0.5rem; font-weight: 700; letter-spacing: 1.5px;
+  padding: 4px 10px; border-radius: 2px; border: 1px solid rgba(255,61,87,0.3);
+  background: var(--bear-glow); color: var(--bear); cursor: pointer;
+  transition: all 0.15s;
+}
+.nf-analyze-btn:hover { background: var(--bear); color: var(--bg); }
+
+/* NF idle / loading */
+.nf-idle {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 48px 20px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: var(--rl);
+}
+.nf-idle-icon { font-size: 1.8rem; opacity: 0.07; }
+.nf-idle-title { font-family: var(--fd); font-size: 0.65rem; letter-spacing: 3px; color: var(--text3); }
+.nf-idle-sub   { font-family: var(--fm); font-size: 0.55rem; color: var(--text3); opacity: 0.5; letter-spacing: 1px; }
+.nf-loading {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 48px 20px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: var(--rl);
+}
+.nf-load-ring {
+  width: 28px; height: 28px;
+  border: 2px solid var(--border2); border-top-color: var(--bear);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+.nf-load-txt { font-family: var(--fd); font-size: 0.58rem; color: var(--bear); letter-spacing: 2px; }
+
+/* Divider */
+.section-divider {
+  display: flex; align-items: center; gap: 16px;
+  margin: 48px 0 0; opacity: 0.25;
+}
+.section-divider::before, .section-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border2);
+}
+.section-divider-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--bear); flex-shrink: 0; }
+
+@media(max-width:600px) {
+  .nf-controls { gap: 8px; }
+  .nf-ex-btn { padding: 8px 12px; font-size: 0.52rem; letter-spacing: 1px; }
+  .nf-scan-btn { padding: 8px 16px; font-size: 0.55rem; }
+  .nf-stats-strip { flex-wrap: wrap; }
+  .nf-stat { flex: 1 1 calc(50% - 1px); }
+  .nf-bar-bg { width: 50px; }
+  .nf-table th:nth-child(5),
+  .nf-table td:nth-child(5) { display: none; }
+}
+
 /* ── FOOTER ── */
 footer {
   display: flex; justify-content: space-between; align-items: center;
@@ -468,6 +666,73 @@ footer {
   </div>
 
 </main>
+
+<!-- NEGATIVE FUNDING SECTION -->
+<div class="main nf-section" id="nf-section">
+
+  <div class="section-divider">
+    <div class="section-divider-dot"></div>
+    <div class="section-divider-dot"></div>
+    <div class="section-divider-dot"></div>
+  </div>
+
+  <div class="nf-section-header" style="margin-top:28px;">
+    <span class="nf-section-tag">SCANNER</span>
+    <span class="nf-section-title">NEGATIVE FUNDING</span>
+    <span class="nf-section-sub">THRESHOLD ≤ −0.05% · CLICK ANY ROW TO ANALYZE</span>
+  </div>
+
+  <div class="nf-controls">
+    <div class="nf-ex-group">
+      <button class="nf-ex-btn" id="nf-bn-btn" onclick="nfSelectEx('binance')">
+        <span class="nf-ex-dot"></span>BINANCE
+      </button>
+      <button class="nf-ex-btn" id="nf-bb-btn" onclick="nfSelectEx('bybit')">
+        <span class="nf-ex-dot"></span>BYBIT
+      </button>
+    </div>
+
+    <button class="nf-scan-btn" id="nf-scan-btn" onclick="nfRunScan()" disabled>
+      <span id="nf-scan-icon">⟳</span>
+      <span id="nf-scan-label">SCAN</span>
+    </button>
+
+    <button class="nf-sort-btn" id="nf-sort-btn" onclick="nfToggleSort()" style="display:none;">
+      <span class="nf-sort-arrow" id="nf-sort-arrow">▼</span>
+      <span id="nf-sort-label">MOST NEGATIVE</span>
+    </button>
+  </div>
+
+  <!-- Stats strip — hidden until scan -->
+  <div class="nf-stats-strip" id="nf-stats" style="display:none;">
+    <div class="nf-stat">
+      <div class="nf-stat-label">TOTAL SCANNED</div>
+      <div class="nf-stat-val acc-c" id="nf-s-total">—</div>
+    </div>
+    <div class="nf-stat">
+      <div class="nf-stat-label">NEG FUNDING ≤ −0.05%</div>
+      <div class="nf-stat-val bear-c" id="nf-s-count">—</div>
+    </div>
+    <div class="nf-stat">
+      <div class="nf-stat-label">MOST NEGATIVE</div>
+      <div class="nf-stat-val gold-c" id="nf-s-worst">—</div>
+    </div>
+    <div class="nf-stat">
+      <div class="nf-stat-label">TIMEFRAME</div>
+      <div class="nf-stat-val acc-c" id="nf-s-tf">—</div>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div id="nf-output">
+    <div class="nf-idle">
+      <div class="nf-idle-icon">◎</div>
+      <div class="nf-idle-title">SELECT EXCHANGE AND SCAN</div>
+      <div class="nf-idle-sub">Filters pairs with funding rate ≤ −0.05%</div>
+    </div>
+  </div>
+
+</div>
 
 <footer>
   <span>ATL — ALPHA TRADERS LABS</span>
@@ -1068,6 +1333,204 @@ async function runAnalysis() {
 document.getElementById('ticker-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') runAnalysis();
 });
+
+/* ════════════════════════════════════════════════
+   NEGATIVE FUNDING SECTION
+════════════════════════════════════════════════ */
+
+const NF_THRESHOLD = -0.05; // only funding <= -0.05%
+let nfEx       = null;
+let nfData     = [];
+let nfSortAsc  = false; // false = most negative first (default)
+let nfScanned  = false;
+
+/* ── Exchange selector ── */
+function nfSelectEx(ex) {
+  nfEx = ex;
+  const bnBtn = document.getElementById('nf-bn-btn');
+  const bbBtn = document.getElementById('nf-bb-btn');
+  bnBtn.className = 'nf-ex-btn' + (ex === 'binance' ? ' sel-bn' : '');
+  bbBtn.className = 'nf-ex-btn' + (ex === 'bybit'   ? ' sel-bb' : '');
+  const scanBtn = document.getElementById('nf-scan-btn');
+  scanBtn.disabled = false;
+  scanBtn.style.borderColor = ex === 'binance' ? 'var(--orange)' : 'var(--bear)';
+  scanBtn.style.color       = ex === 'binance' ? 'var(--orange)' : 'var(--bear)';
+  scanBtn.querySelector('::before'); // no-op, just trigger repaint
+}
+
+/* ── Sort toggle ── */
+function nfToggleSort() {
+  nfSortAsc = !nfSortAsc;
+  const arrow = document.getElementById('nf-sort-arrow');
+  const label = document.getElementById('nf-sort-label');
+  arrow.className = 'nf-sort-arrow' + (nfSortAsc ? ' asc' : '');
+  label.textContent = nfSortAsc ? 'LEAST NEGATIVE' : 'MOST NEGATIVE';
+  nfRenderTable();
+}
+
+/* ── Fetch all pairs from Binance ── */
+async function nfFetchBinance() {
+  const data = await safeFetch('https://fapi.binance.com/fapi/v1/premiumIndex');
+  if (!data || !Array.isArray(data)) return [];
+  return data
+    .filter(t => t.symbol.endsWith('USDT') && t.lastFundingRate !== undefined)
+    .map(t => ({
+      symbol:   t.symbol.replace('USDT', ''),
+      fullSym:  t.symbol,
+      exchange: 'Binance',
+      funding:  parseFloat(t.lastFundingRate) * 100,
+      price:    parseFloat(t.markPrice) || parseFloat(t.indexPrice) || 0,
+    }));
+}
+
+/* ── Fetch all pairs from Bybit ── */
+async function nfFetchBybit() {
+  const data = await safeFetch('https://api.bybit.com/v5/market/tickers?category=linear', true);
+  if (!data?.result?.list) return [];
+  return data.result.list
+    .filter(t => t.symbol.endsWith('USDT') && t.fundingRate !== undefined && t.fundingRate !== '')
+    .map(t => ({
+      symbol:   t.symbol.replace('USDT', ''),
+      fullSym:  t.symbol,
+      exchange: 'Bybit',
+      funding:  parseFloat(t.fundingRate) * 100,
+      price:    parseFloat(t.lastPrice) || 0,
+    }));
+}
+
+/* ── Main scan ── */
+async function nfRunScan() {
+  if (!nfEx) return;
+
+  const scanBtn = document.getElementById('nf-scan-btn');
+  const scanIcon = document.getElementById('nf-scan-icon');
+  const scanLabel = document.getElementById('nf-scan-label');
+  scanBtn.disabled = true;
+  scanIcon.className = 'nf-scan-spin';
+  scanIcon.textContent = '⟳';
+  scanLabel.textContent = 'SCANNING...';
+
+  document.getElementById('nf-stats').style.display = 'none';
+  document.getElementById('nf-sort-btn').style.display = 'none';
+  document.getElementById('nf-output').innerHTML = `
+    <div class="nf-loading">
+      <div class="nf-load-ring"></div>
+      <div class="nf-load-txt">FETCHING ${nfEx.toUpperCase()} PAIRS...</div>
+    </div>`;
+
+  try {
+    const raw = nfEx === 'binance' ? await nfFetchBinance() : await nfFetchBybit();
+    if (!raw.length) throw new Error('No data returned. Check connection or try the other exchange.');
+
+    // Filter: funding <= NF_THRESHOLD
+    nfData = raw.filter(c => c.funding <= NF_THRESHOLD);
+    nfScanned = true;
+
+    // Update stats
+    const worst = [...nfData].sort((a, b) => a.funding - b.funding)[0];
+    document.getElementById('nf-s-total').textContent  = raw.length;
+    document.getElementById('nf-s-count').textContent  = nfData.length;
+    document.getElementById('nf-s-worst').textContent  = worst ? worst.symbol + ' ' + worst.funding.toFixed(4) + '%' : '—';
+    document.getElementById('nf-s-tf').textContent     = currentTF.toUpperCase();
+    document.getElementById('nf-stats').style.display  = 'flex';
+    document.getElementById('nf-sort-btn').style.display = 'flex';
+
+    nfRenderTable();
+
+  } catch(e) {
+    document.getElementById('nf-output').innerHTML = `
+      <div class="nf-idle">
+        <div class="nf-idle-icon" style="color:var(--bear);opacity:0.4;">✕</div>
+        <div class="nf-idle-title" style="color:var(--bear);">SCAN FAILED</div>
+        <div class="nf-idle-sub">${e.message}</div>
+      </div>`;
+  }
+
+  scanBtn.disabled = false;
+  scanIcon.className = '';
+  scanIcon.textContent = '⟳';
+  scanLabel.textContent = 'RESCAN';
+}
+
+/* ── Render table ── */
+function nfRenderTable() {
+  if (!nfScanned || !nfData.length) {
+    document.getElementById('nf-output').innerHTML = `
+      <div class="nf-idle">
+        <div class="nf-idle-icon">◎</div>
+        <div class="nf-idle-title">NO PAIRS FOUND</div>
+        <div class="nf-idle-sub">No pairs with funding ≤ −0.05% on ${nfEx ? nfEx.toUpperCase() : 'selected exchange'}</div>
+      </div>`;
+    return;
+  }
+
+  // Sort
+  const sorted = [...nfData].sort((a, b) =>
+    nfSortAsc ? b.funding - a.funding : a.funding - b.funding
+  );
+
+  const maxAbs = Math.max(...sorted.map(c => Math.abs(c.funding)), 0.001);
+  const exBadgeCls = nfEx === 'binance' ? 'nf-ex-bn' : 'nf-ex-bb';
+  const exLabel    = nfEx === 'binance' ? 'BINANCE' : 'BYBIT';
+
+  const rows = sorted.map((c, i) => {
+    const barPct = clamp((Math.abs(c.funding) / maxAbs) * 100, 0, 100).toFixed(1);
+    const initials = c.symbol.slice(0, 3).toUpperCase();
+    const price = fmtPrice(c.price);
+    return `<tr onclick="nfAnalyzeCoin('${c.symbol}')" style="animation-delay:${i * 0.01}s" title="Click to analyze ${c.symbol}">
+      <td><span class="nf-rank">${i + 1}</span></td>
+      <td>
+        <div class="nf-sym-cell">
+          <div class="nf-sym-icon">${initials}</div>
+          <div>
+            <div class="nf-sym">${c.symbol}</div>
+            <div class="nf-usdt">${c.fullSym}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="nf-rate-val">${c.funding.toFixed(4)}%</span></td>
+      <td>
+        <div class="nf-bar-cell">
+          <div class="nf-bar-bg"><div class="nf-bar-fill" style="width:${barPct}%"></div></div>
+        </div>
+      </td>
+      <td><span class="nf-price-val">${price}</span></td>
+      <td><span class="nf-ex-badge ${exBadgeCls}">${exLabel}</span></td>
+      <td><button class="nf-analyze-btn" onclick="event.stopPropagation();nfAnalyzeCoin('${c.symbol}')">ANALYZE →</button></td>
+    </tr>`;
+  });
+
+  document.getElementById('nf-output').innerHTML = `
+    <div class="nf-table-wrap">
+      <table class="nf-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>PAIR</th>
+            <th class="th-rate" onclick="nfToggleSort()">FUNDING RATE <span id="nf-th-arrow">${nfSortAsc ? '▲' : '▼'}</span></th>
+            <th>INTENSITY</th>
+            <th>MARK PRICE</th>
+            <th>EXCHANGE</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows.join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+/* ── Click row → run analysis ── */
+async function nfAnalyzeCoin(sym) {
+  // Set input field for visual feedback
+  document.getElementById('ticker-input').value = sym;
+
+  // Scroll to top / output section smoothly
+  document.getElementById('output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Small delay to let scroll happen, then run analysis
+  await new Promise(r => setTimeout(r, 300));
+  await runAnalysis();
+}
 
 /* ── Init ── */
 startClock();
